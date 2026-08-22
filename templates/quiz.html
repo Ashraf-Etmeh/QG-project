@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <link
+        rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css"
+    />
+
+    <link
+        rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    >
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+        rel="stylesheet"
+    >
+
+    <title>Policy Assessment Quiz</title>
+
+    <style>
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #ffffff;
+            color: #1e293b;
+        }
+
+        .navbar {
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            background-color: #ffffff !important;
+        }
+
+        .quiz-container {
+            max-width: 750px;
+            margin: 40px auto;
+            padding: 20px;
+        }
+
+        .question-card {
+            background: #ffffff;
+            border-radius: 16px;
+            padding: 30px;
+            margin-bottom: 25px;
+
+            box-shadow:
+                0 10px 25px -5px rgba(0, 209, 178, 0.05),
+                0 0 0 1px #e2e8f0;
+
+            transition: all 0.3s ease;
+        }
+
+        .question-card:hover {
+            box-shadow:
+                0 15px 30px -5px rgba(0, 209, 178, 0.12),
+                0 0 0 1px #99f6e4;
+        }
+
+        .question-type {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-bottom: 15px;
+        }
+
+        .mcq-badge {
+            background-color: #ecfdf5;
+            color: #008f7a;
+        }
+
+        .free-response-badge {
+            background-color: #eff6ff;
+            color: #2563eb;
+        }
+
+        .option-label {
+            display: flex;
+            align-items: center;
+
+            padding: 14px 18px;
+            margin-top: 12px;
+
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+
+            cursor: pointer;
+
+            transition: all 0.3s ease;
+
+            background-color: #fdfdfd;
+        }
+
+        .option-label:hover {
+            background-color: #f0fdf4;
+            border-color: #00d1b2;
+
+            box-shadow:
+                0 0 15px rgba(0, 209, 178, 0.2);
+
+            transform: translateX(4px);
+        }
+
+        input[type="radio"] {
+            margin-right: 12px;
+            accent-color: #00d1b2;
+        }
+
+        input[type="radio"]:checked + .option-text {
+            font-weight: 700;
+            color: #00d1b2;
+        }
+
+        .free-response-input {
+            width: 100%;
+            min-height: 160px;
+
+            padding: 15px;
+
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+
+            font-family: 'Inter', sans-serif;
+            font-size: 1rem;
+
+            resize: vertical;
+
+            transition: all 0.3s ease;
+        }
+
+        .free-response-input:focus {
+            outline: none;
+
+            border-color: #00d1b2;
+
+            box-shadow:
+                0 0 0 3px rgba(0, 209, 178, 0.1);
+        }
+
+        .free-response-hint {
+            margin-top: 8px;
+            color: #64748b;
+            font-size: 0.85rem;
+        }
+
+        .custom-btn {
+            position: relative;
+
+            background:
+                linear-gradient(
+                    135deg,
+                    #00d1b2 0%,
+                    #00b89c 100%
+                ) !important;
+
+            border: none;
+            border-radius: 10px;
+
+            color: white !important;
+
+            transition: all 0.3s ease;
+            overflow: hidden;
+        }
+
+        .custom-btn:hover {
+            background:
+                linear-gradient(
+                    135deg,
+                    #00b89c 0%,
+                    #009e86 100%
+                ) !important;
+
+            box-shadow:
+                0 0 25px rgba(0, 209, 178, 0.5);
+
+            transform: translateY(-2px);
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+    <nav class="navbar" role="navigation">
+
+        <div class="container">
+
+            <div class="navbar-brand">
+
+                <a
+                    class="navbar-item"
+                    href="{{ url_for('index') }}"
+                >
+
+                    <span
+                        class="has-text-weight-bold is-size-4"
+                        style="color: #00d1b2;"
+                    >
+
+                        <i class="fa-solid fa-shield-halved ml-2"></i>
+
+                        Onboarding AI
+
+                    </span>
+
+                </a>
+
+            </div>
+
+        </div>
+
+    </nav>
+
+
+    <div class="container quiz-container">
+
+        {% if uploaded == true %}
+
+        <form
+            action="{{ url_for('result') }}"
+            method="POST"
+        >
+
+            <h2
+                class="is-size-3 has-text-weight-bold mb-5"
+                style="color: #1e293b;"
+            >
+
+                Policy Assessment Questions
+
+            </h2>
+
+
+            {% for question_id, question_data in questions.items() %}
+
+            <div class="question-card">
+
+
+                {% if question_data.get('type') == 'Free-Response' %}
+
+                    <span class="question-type free-response-badge">
+
+                        <i class="fa-solid fa-pen mr-1"></i>
+
+                        Free Response
+
+                    </span>
+
+                {% else %}
+
+                    <span class="question-type mcq-badge">
+
+                        <i class="fa-solid fa-list-check mr-1"></i>
+
+                        Multiple Choice
+
+                    </span>
+
+                {% endif %}
+
+                <h3
+                    class="has-text-weight-bold is-size-5 mb-4"
+                    style="color: #1e293b;"
+                >
+
+                    {{ loop.index }}.
+
+                    {{ question_data['question'] }}
+
+                </h3>
+
+                {% if question_data.get('type') == 'Multiple-Choice' %}
+
+                    <div class="control">
+
+                        {% for option in question_data.get('options', []) %}
+
+                        <label class="option-label">
+
+                            <input
+                                type="radio"
+                                name="{{ question_id }}"
+                                value="{{ option }}"
+                                required
+                            >
+
+                            <span class="option-text">
+
+                                {{ option }}
+
+                            </span>
+
+                        </label>
+
+                        {% endfor %}
+
+                    </div>
+
+                {% elif question_data.get('type') == 'Free-Response' %}
+
+                    <div class="control">
+
+                        <textarea
+                            class="free-response-input"
+                            name="{{ question_id }}"
+                            placeholder="Write your answer here..."
+                            required
+                        ></textarea>
+
+                        <p class="free-response-hint">
+
+                            <i class="fa-solid fa-circle-info mr-1"></i>
+
+                            Explain your answer clearly using the
+                            relevant policy or provisions.
+
+                        </p>
+
+                    </div>
+
+
+                {% endif %}
+
+            </div>
+
+            {% endfor %}
+
+            <button
+                type="submit"
+                class="button custom-btn is-medium is-fullwidth has-text-weight-bold mt-5"
+            >
+
+                <span>
+                    Submit Answers & View Result
+                </span>
+
+                <span class="icon ml-2">
+
+                    <i class="fa-solid fa-arrow-right"></i>
+
+                </span>
+
+            </button>
+
+        </form>
+
+
+        {% else %}
+
+        <div
+            class="box has-text-centered py-6"
+            style="
+                border-radius: 16px;
+                border: 1px solid #e2e8f0;
+            "
+        >
+
+            <span
+                class="icon is-large has-text-danger mb-3"
+                style="font-size: 2.5rem;"
+            >
+
+                <i class="fa-solid fa-triangle-exclamation"></i>
+
+            </span>
+
+            <h3
+                class="is-size-4 has-text-weight-bold has-text-danger"
+            >
+
+                Sorry, failed to upload file
+                or extract questions.
+
+            </h3>
+
+            <a
+                href="{{ url_for('index') }}"
+                class="button custom-btn mt-4"
+            >
+
+                Return to Home
+
+            </a>
+
+        </div>
+
+        {% endif %}
+
+    </div>
+
+</body>
+
+</html>

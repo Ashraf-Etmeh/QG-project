@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css" />
+
+  <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
+
+  <title>Employee Onboarding Assessment System</title>
+
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #ffffff;
+      color: #1e293b;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .navbar {
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+      background-color: #ffffff !important;
+    }
+
+    .main-box {
+      max-width: 650px;
+      margin: 50px auto;
+      background: #ffffff;
+      padding: 45px;
+      border-radius: 16px;
+      box-shadow:
+        0 15px 30px -5px rgba(0, 209, 178, 0.08),
+        0 0 0 1px #e2e8f0;
+    }
+
+    .upload-card {
+      border: 2px dashed #99f6e4;
+      border-radius: 12px;
+      padding: 35px;
+      text-align: center;
+      transition: all 0.3s ease;
+      background: #fdfdfd;
+      cursor: pointer;
+    }
+
+    .upload-card:hover {
+      border-color: #00d1b2;
+      background: #f0fdf4;
+      box-shadow: 0 0 20px rgba(0, 209, 178, 0.25);
+      transform: translateY(-2px);
+    }
+
+    .custom-btn {
+      position: relative;
+      background: linear-gradient(
+        135deg,
+        #00d1b2 0%,
+        #00b89c 100%
+      ) !important;
+
+      border: none;
+      border-radius: 10px;
+      color: white !important;
+      transition: all 0.3s ease;
+      overflow: hidden;
+    }
+
+    .custom-btn:hover {
+      background: linear-gradient(
+        135deg,
+        #00b89c 0%,
+        #009e86 100%
+      ) !important;
+
+      box-shadow: 0 0 25px rgba(0, 209, 178, 0.5);
+      transform: translateY(-2px);
+    }
+
+    /* Quiz method section */
+    .method-title {
+      font-weight: 600;
+      color: #1e293b;
+      margin-bottom: 12px;
+    }
+
+    .method-options {
+      display: flex;
+      gap: 15px;
+      margin-bottom: 30px;
+    }
+
+    .method-option {
+      flex: 1;
+      position: relative;
+    }
+
+    .method-option input {
+      position: absolute;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .method-card {
+      display: block;
+      padding: 20px;
+      border: 2px solid #e2e8f0;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      height: 100%;
+      background: #ffffff;
+    }
+
+    .method-card:hover {
+      border-color: #99f6e4;
+      background-color: #f0fdf4;
+      transform: translateY(-2px);
+    }
+
+    /* Selected method */
+    .method-option input:checked + .method-card {
+      border-color: #00d1b2;
+      background-color: #f0fdfa;
+      box-shadow: 0 0 0 2px rgba(0, 209, 178, 0.1);
+    }
+
+    .method-icon {
+      font-size: 28px;
+      color: #00d1b2;
+      margin-bottom: 10px;
+    }
+
+    .method-name {
+      font-weight: 700;
+      color: #1e293b;
+      margin-bottom: 5px;
+    }
+
+    .method-description {
+      font-size: 0.85rem;
+      color: #64748b;
+      line-height: 1.5;
+    }
+
+    .selected-indicator {
+      display: none;
+      color: #00b89c;
+      font-size: 0.8rem;
+      font-weight: 600;
+      margin-top: 8px;
+    }
+
+    .method-option input:checked + .method-card .selected-indicator {
+      display: block;
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Navbar -->
+  <nav class="navbar"
+       role="navigation"
+       aria-label="main navigation">
+
+    <div class="container">
+
+      <div class="navbar-brand">
+
+        <a class="navbar-item"
+           href="{{ url_for('index') }}">
+
+          <span class="has-text-weight-bold is-size-4"
+                style="color: #00d1b2;">
+
+            <i class="fa-solid fa-shield-halved ml-2"></i>
+            Onboarding AI
+
+          </span>
+
+        </a>
+
+      </div>
+
+    </div>
+
+  </nav>
+
+
+  <!-- Main content -->
+  <main class="container">
+
+    <div class="main-box">
+
+      <div class="has-text-centered mb-5">
+
+        <h1 class="is-size-3 has-text-weight-bold mb-2"
+            style="color: #1e293b;">
+
+          Company Policy Assessment
+
+        </h1>
+
+        <p class="has-text-grey">
+
+          Upload your official PDF policy document to instantly generate
+          smart quizzes and distractor options for new hires.
+
+        </p>
+
+      </div>
+
+
+      <!-- Quiz generation form -->
+      <form action="/quiz"
+            method="POST"
+            enctype="multipart/form-data">
+
+
+        <!-- PDF Upload -->
+        <div id="file-js-example"
+             class="file has-name is-fullwidth mb-5">
+
+          <label class="file-label upload-card">
+
+            <!-- PDF only -->
+            <input
+              class="file-input"
+              type="file"
+              name="file"
+              accept="application/pdf"
+              required
+            />
+
+            <span class="file-cta"
+                  style="
+                    background: transparent;
+                    border: none;
+                    justify-content: center;
+                    display: flex;
+                    flex-direction: column;
+                  ">
+
+              <span class="file-icon is-size-2 mb-2"
+                    style="color: #00d1b2;">
+
+                <i class="fas fa-file-pdf"></i>
+
+              </span>
+
+              <span class="file-label has-text-weight-bold is-size-6 mt-1"
+                    style="color: #1e293b;">
+
+                Click to browse your PDF policy
+
+              </span>
+
+            </span>
+
+            <span class="file-name has-text-centered mt-3"
+                  style="
+                    border: none;
+                    background: transparent;
+                    color: #64748b;
+                    font-size: 0.9rem;
+                  ">
+
+              No PDF file selected
+
+            </span>
+
+          </label>
+
+        </div>
+
+
+        <!-- Quiz Generation Method -->
+        <div class="mb-5">
+
+          <p class="method-title">
+            <i class="fa-solid fa-wand-magic-sparkles"
+               style="color: #00d1b2;"></i>
+
+            Choose Quiz Generation Method
+          </p>
+
+
+          <div class="method-options">
+
+            <!-- Blank Based -->
+            <div class="method-option">
+
+              <input
+                type="radio"
+                id="blank_based"
+                name="generation_method"
+                value="blank_based"
+                checked
+              />
+
+              <label
+                class="method-card"
+                for="blank_based">
+
+                <div class="has-text-centered">
+
+                  <div class="method-icon">
+                    <i class="fa-solid fa-pen-to-square"></i>
+                  </div>
+
+                  <div class="method-name">
+                    Blank-Based
+                  </div>
+
+                  <div class="method-description">
+                    Generate questions by creating blanks
+                    from important information in the policy.
+                  </div>
+
+                  <div class="selected-indicator">
+                    <i class="fa-solid fa-check"></i>
+                    Selected
+                  </div>
+
+                </div>
+
+              </label>
+
+            </div>
+
+
+            <!-- Free Based -->
+            <div class="method-option">
+
+              <input
+                type="radio"
+                id="free_based"
+                name="generation_method"
+                value="free_based"
+              />
+
+              <label
+                class="method-card"
+                for="free_based">
+
+                <div class="has-text-centered">
+
+                  <div class="method-icon">
+                    <i class="fa-solid fa-brain"></i>
+                  </div>
+
+                  <div class="method-name">
+                    Free-Based
+                  </div>
+
+                  <div class="method-description">
+                    Generate questions freely from the
+                    important concepts and information in the policy.
+                  </div>
+
+                  <div class="selected-indicator">
+                    <i class="fa-solid fa-check"></i>
+                    Selected
+                  </div>
+
+                </div>
+
+              </label>
+
+            </div>
+
+          </div>
+
+        </div>
+
+
+        <!-- Submit -->
+        <button
+          type="submit"
+          class="button custom-btn is-medium is-fullwidth has-text-weight-bold">
+
+          <span>
+            Generate Assessment Quiz
+          </span>
+
+          <span class="icon mr-2">
+            <i class="fa-solid fa-arrow-right"></i>
+          </span>
+
+        </button>
+
+      </form>
+
+    </div>
+
+  </main>
+
+
+  <!-- Footer -->
+  <footer
+    class="has-text-centered py-4 has-text-grey"
+    style="font-size: 0.85rem;">
+
+    <p>
+      Employee Onboarding System &copy; 2026
+    </p>
+
+  </footer>
+
+
+  <!-- JavaScript -->
+  <script>
+
+    const fileInput =
+      document.querySelector(
+        "#file-js-example input[type=file]"
+      );
+
+    fileInput.onchange = () => {
+
+      if (fileInput.files.length > 0) {
+
+        const fileName =
+          document.querySelector(
+            "#file-js-example .file-name"
+          );
+
+        fileName.textContent =
+          fileInput.files[0].name;
+
+        fileName.style.color = "#00d1b2";
+        fileName.style.fontWeight = "600";
+
+      }
+
+    };
+
+  </script>
+
+</body>
+
+</html>

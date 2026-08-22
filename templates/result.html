@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+
+<head>
+
+    <meta charset="UTF-8" />
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    />
+
+    <link
+        rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css"
+    />
+
+    <link
+        rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    >
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+        rel="stylesheet"
+    >
+
+    <title>Assessment Results & Correction</title>
+
+
+    <style>
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #ffffff;
+            color: #1e293b;
+        }
+
+        .navbar {
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            background-color: #ffffff !important;
+        }
+
+        .results-container {
+            max-width: 750px;
+            margin: 40px auto;
+            padding: 20px;
+        }
+
+        .result-card {
+            background: #ffffff;
+            border-radius: 16px;
+            padding: 30px;
+            margin-bottom: 25px;
+
+            box-shadow:
+                0 10px 25px -5px rgba(0, 209, 178, 0.05),
+                0 0 0 1px #e2e8f0;
+
+            transition: all 0.3s ease;
+        }
+
+        .result-card:hover {
+
+            box-shadow:
+                0 15px 30px -5px rgba(0, 209, 178, 0.12),
+                0 0 0 1px #99f6e4;
+        }
+
+
+        /* =====================================
+           QUESTION TYPE BADGES
+           ===================================== */
+
+        .question-type {
+
+            display: inline-block;
+
+            padding: 5px 12px;
+
+            border-radius: 20px;
+
+            font-size: 0.75rem;
+
+            font-weight: 600;
+
+            margin-bottom: 15px;
+        }
+
+        .mcq-badge {
+
+            background-color: #ecfdf5;
+
+            color: #008f7a;
+        }
+
+        .free-response-badge {
+
+            background-color: #eff6ff;
+
+            color: #2563eb;
+        }
+
+        .option-review {
+
+            display: flex;
+
+            align-items: center;
+
+            padding: 12px 18px;
+
+            margin-top: 10px;
+
+            border-radius: 10px;
+
+            border: 2px solid #e2e8f0;
+
+            background-color: #fdfdfd;
+        }
+
+
+        .is-correct-option {
+
+            background-color: #f0fdf4 !important;
+
+            border-color: #23d160 !important;
+
+            color: #15803d;
+
+            font-weight: 600;
+        }
+
+
+        .is-wrong-option {
+
+            background-color: #fef2f2 !important;
+
+            border-color: #ff3860 !important;
+
+            color: #b91c1c;
+        }
+
+        .answer-box {
+
+            padding: 18px;
+
+            margin-top: 12px;
+
+            border-radius: 10px;
+
+            border: 2px solid #e2e8f0;
+
+            background-color: #f8fafc;
+        }
+
+
+        .user-answer {
+
+            border-left: 4px solid #3b82f6;
+        }
+
+
+        .correct-answer {
+
+            border-left: 4px solid #23d160;
+
+            background-color: #f0fdf4;
+        }
+
+
+        .incorrect-answer {
+
+            border-left: 4px solid #ff3860;
+
+            background-color: #fef2f2;
+        }
+
+
+        .answer-title {
+
+            font-size: 0.85rem;
+
+            font-weight: 700;
+
+            margin-bottom: 8px;
+
+            color: #475569;
+        }
+
+
+        .answer-text {
+
+            line-height: 1.6;
+
+            white-space: pre-wrap;
+        }
+
+        .similarity-score {
+
+            margin-top: 15px;
+
+            padding: 15px;
+
+            border-radius: 10px;
+
+            background-color: #eff6ff;
+
+            border: 1px solid #bfdbfe;
+        }
+
+        .custom-btn {
+
+            position: relative;
+
+            background:
+                linear-gradient(
+                    135deg,
+                    #00d1b2 0%,
+                    #00b89c 100%
+                ) !important;
+
+            border: none;
+
+            border-radius: 10px;
+
+            color: white !important;
+
+            transition: all 0.3s ease;
+        }
+
+
+        .custom-btn:hover {
+
+            background:
+                linear-gradient(
+                    135deg,
+                    #00b89c 0%,
+                    #009e86 100%
+                ) !important;
+
+            box-shadow:
+                0 0 25px rgba(0, 209, 178, 0.5);
+
+            transform: translateY(-2px);
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+    <nav class="navbar" role="navigation">
+
+        <div class="container">
+
+            <div class="navbar-brand">
+
+                <a
+                    class="navbar-item"
+                    href="{{ url_for('index') }}"
+                >
+
+                    <span
+                        class="has-text-weight-bold is-size-4"
+                        style="color: #00d1b2;"
+                    >
+
+                        <i class="fa-solid fa-shield-halved ml-2"></i>
+
+                        Onboarding AI
+
+                    </span>
+
+                </a>
+
+            </div>
+
+        </div>
+
+    </nav>
+
+
+    <div class="container results-container">
+
+        <div
+            class="box has-text-centered py-5 mb-6"
+            style="
+                border-radius: 16px;
+                border: 1px solid #e2e8f0;
+                background: #fdfdfd;
+            "
+        >
+
+            <h2
+                class="is-size-3 has-text-weight-bold mb-2"
+                style="color: #1e293b;"
+            >
+
+                Assessment Results
+
+            </h2>
+
+
+            <p
+                class="is-size-4 has-text-weight-semibold"
+                style="color: #00d1b2;"
+            >
+
+                Your Score:
+
+                {{ score }}
+
+                /
+
+                {{ total }}
+
+            </p>
+
+
+            <p class="has-text-grey mt-2">
+
+                You answered
+
+                <strong>{{ score }}</strong>
+
+                out of
+
+                <strong>{{ total }}</strong>
+
+                questions correctly.
+
+            </p>
+
+        </div>
+
+        <h3
+            class="is-size-4 has-text-weight-bold mb-4"
+            style="color: #1e293b;"
+        >
+
+            Detailed Correction Review
+
+        </h3>
+
+        {% for question_id, question in review_data.items() %}
+
+
+        <div class="result-card">
+
+            {% if question['type'] == 'Free-Response' %}
+
+                <span
+                    class="question-type free-response-badge"
+                >
+
+                    <i class="fa-solid fa-pen mr-1"></i>
+
+                    Free Response
+
+                </span>
+
+            {% else %}
+
+                <span
+                    class="question-type mcq-badge"
+                >
+
+                    <i class="fa-solid fa-list-check mr-1"></i>
+
+                    Multiple Choice
+
+                </span>
+
+            {% endif %}
+
+            <h4
+                class="has-text-weight-bold is-size-5 mb-3"
+                style="color: #1e293b;"
+            >
+
+                {{ loop.index }}.
+
+                {{ question['question'] }}
+
+            </h4>
+
+
+            {% if question['type'] == 'Multiple-Choice' %}
+
+
+                <div class="control">
+
+                    {% for option in question['options'] %}
+
+                        {% set is_user_choice =
+                            (option == question['user_answer'])
+                        %}
+
+                        {% set is_correct =
+                            (option == question['correct_answer'])
+                        %}
+
+
+                        <div
+                            class="option-review
+
+                            {% if is_correct %}
+                                is-correct-option
+
+                            {% elif is_user_choice %}
+                                is-wrong-option
+
+                            {% endif %}"
+                        >
+
+
+                            <span class="mr-3">
+
+                                {% if is_correct %}
+
+                                    <i
+                                        class="fa-solid fa-circle-check
+                                        has-text-success
+                                        is-size-5"
+                                    ></i>
+
+                                {% elif is_user_choice %}
+
+                                    <i
+                                        class="fa-solid fa-circle-xmark
+                                        has-text-danger
+                                        is-size-5"
+                                    ></i>
+
+                                {% else %}
+
+                                    <i
+                                        class="fa-regular fa-circle
+                                        has-text-grey-light
+                                        is-size-5"
+                                    ></i>
+
+                                {% endif %}
+
+                            </span>
+
+
+                            <span>
+
+                                {{ option }}
+
+                            </span>
+
+
+                            <!-- Correct answer -->
+
+                            {% if is_correct %}
+
+                                <span
+                                    class="ml-auto
+                                    tag
+                                    is-success
+                                    is-light
+                                    has-text-weight-bold"
+                                >
+
+                                    Correct Answer
+
+                                </span>
+
+
+                            <!-- User answer -->
+
+                            {% elif is_user_choice %}
+
+                                <span
+                                    class="ml-auto
+                                    tag
+                                    is-danger
+                                    is-light
+                                    has-text-weight-bold"
+                                >
+
+                                    Your Answer
+
+                                </span>
+
+                            {% endif %}
+
+
+                        </div>
+
+                    {% endfor %}
+
+                </div>
+
+            {% elif question['type'] == 'Free-Response' %}
+
+
+                <!-- User answer -->
+
+                <div
+                    class="
+                        answer-box
+                        user-answer
+
+                        {% if question['correct'] %}
+                            correct-answer
+                        {% else %}
+                            incorrect-answer
+                        {% endif %}
+                    "
+                >
+
+                    <div class="answer-title">
+
+                        <i class="fa-solid fa-user mr-1"></i>
+
+                        Your Answer
+
+                    </div>
+
+
+                    <div class="answer-text">
+
+                        {% if question['user_answer'] %}
+
+                            {{ question['user_answer'] }}
+
+                        {% else %}
+
+                            <span class="has-text-grey">
+
+                                No answer provided.
+
+                            </span>
+
+                        {% endif %}
+
+                    </div>
+
+                </div>
+
+
+                <!-- Reference answer -->
+
+                <div
+                    class="answer-box correct-answer"
+                >
+
+                    <div class="answer-title">
+
+                        <i
+                            class="fa-solid fa-circle-check
+                            has-text-success
+                            mr-1"
+                        ></i>
+
+                        Reference Answer
+
+                    </div>
+
+
+                    <div class="answer-text">
+
+                        {{ question['correct_answer'] }}
+
+                    </div>
+
+                </div>
+
+
+                <!-- Semantic evaluation -->
+
+                <div class="similarity-score">
+
+                    <div
+                        class="is-flex
+                        is-justify-content-space-between
+                        is-align-items-center"
+                    >
+
+                        <span
+                            class="has-text-weight-bold"
+                        >
+
+                            <i
+                                class="fa-solid fa-chart-simple mr-1"
+                            ></i>
+
+                            Semantic Similarity
+
+                        </span>
+
+
+                        <span
+                            class="tag
+                            {% if question['correct'] %}
+                                is-success
+                            {% else %}
+                                is-danger
+                            {% endif %}
+                            is-medium"
+                        >
+
+                            {{ "%.1f"|format(
+                                question['score'] * 100
+                            ) }}%
+
+                        </span>
+
+                    </div>
+
+
+                    <p class="mt-2">
+
+                        {% if question['status'] == 'Correct' %}
+
+                            <span class="has-text-success">
+
+                                <i
+                                    class="fa-solid fa-circle-check mr-1"
+                                ></i>
+
+                                Your answer is considered correct.
+
+                            </span>
+
+                        {% else %}
+
+                            <span class="has-text-danger">
+
+                                <i
+                                    class="fa-solid fa-circle-xmark mr-1"
+                                ></i>
+
+                                Your answer does not sufficiently
+                                match the reference answer.
+
+                            </span>
+
+                        {% endif %}
+
+                    </p>
+
+                </div>
+
+
+            {% endif %}
+
+
+        </div>
+
+
+        {% endfor %}
+
+        <div class="has-text-centered mt-5">
+
+            <a
+                href="{{ url_for('index') }}"
+                class="button
+                custom-btn
+                is-medium
+                has-text-weight-bold
+                px-6"
+            >
+
+                <span class="icon mr-2">
+
+                    <i class="fa-solid fa-rotate-left"></i>
+
+                </span>
+
+                <span>
+
+                    Upload Another Document
+
+                </span>
+
+            </a>
+
+        </div>
+
+
+    </div>
+
+</body>
+
+</html>

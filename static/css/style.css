@@ -1,0 +1,101 @@
+/* تنسيقات عامة وتطبيق خط كايرو على كامل الموقع */
+body {
+    font-family: 'Cairo', sans-serif !important;
+    background-color: #f8fafc;
+    color: #0f172a;
+    text-align: right;
+    direction: rtl;
+}
+
+/* تحسين مظهر شريط التنقل العلوي */
+.navbar {
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    direction: ltr; /* لضمان بقاء الشعار في مكانه الصحيح */
+}
+
+.navbar-brand {
+    direction: rtl;
+}
+
+/* تنسيق الصناديق والبطاقات الرئيسية */
+.main-box {
+    max-width: 650px;
+    margin: 60px auto;
+    background: #ffffff;
+    padding: 40px;
+    border-radius: 16px;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
+}
+
+/* صندوق رفع الملفات */
+.upload-card {
+    border: 2px dashed #cbd5e1;
+    border-radius: 12px;
+    padding: 30px;
+    text-align: center;
+    transition: 0.3s;
+    background: #fdfdfd;
+    cursor: pointer;
+}
+
+.upload-card:hover {
+    border-color: #4f46e5;
+    background-color: #f8fafc;
+}
+
+/* بطاقات الأسئلة في صفحة الاختبار */
+.quiz-container {
+    max-width: 700px;
+    margin: 40px auto;
+    padding: 20px;
+}
+
+.question-card {
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 25px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    border: 1px solid #f1f5f9;
+}
+
+/* خيارات الإجابات وتأثير المرور عليها */
+.option-label {
+    display: flex;
+    align-items: center;
+    padding: 12px 15px;
+    margin-top: 10px;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: 0.2s;
+    background-color: #ffffff;
+}
+
+.option-label:hover {
+    background-color: #f8fafc;
+    border-color: #cbd5e1;
+}
+
+input[type="radio"] {
+    margin-left: 12px;
+    accent-color: #4f46e5; /* لون مميز لزر الاختيار */
+}
+
+/* صندوق النتيجة النهائية */
+.result-box {
+    max-width: 500px;
+    margin: auto;
+    background: #ffffff;
+    padding: 40px;
+    border-radius: 16px;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
+    text-align: center;
+}
+
+.score-circle {
+    font-size: 3rem;
+    font-weight: 900;
+    color: #4f46e5;
+    margin: 20px 0;
+}
