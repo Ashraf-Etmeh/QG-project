@@ -4,19 +4,27 @@ answers for a given answer
 '''
 from nltk.tokenize import sent_tokenize, word_tokenize
 import random
-import numpy as np
-import spacy
+import torch
 from nltk.corpus import wordnet as wn
-from sentence_transformers import SentenceTransformer, util
+from sentence_transformers import util
+
+from nlp_models import nlp, semantic_model
 
 
 class IncorrectAnswerGenerator:
-    def __init__(self, document):
+    # Class-level caches (shared across ALL instances, survive between requests)
+    _embedding_cache_shared = {}
+    _wordnet_cache_shared = {}
+
+    def __init__(self, document, doc=None):
         self.document = document
-        self.nlp = spacy.load('en_core_web_md')
-        self.ranker_model = SentenceTransformer('all-MiniLM-L6-v2')
-        self.doc = self.nlp(document)
+        self.nlp = nlp
+        self.ranker_model = semantic_model
+        self.doc = doc if doc is not None else self.nlp(document)
         self.document_candidates = self.get_document_candidates()
+        # Instance references point to the shared class-level caches
+        self._embedding_cache = IncorrectAnswerGenerator._embedding_cache_shared
+        self._wordnet_cache = IncorrectAnswerGenerator._wordnet_cache_shared
 
     def get_document_candidates(self):
         doc = self.doc
@@ -53,9 +61,7 @@ class IncorrectAnswerGenerator:
 
         return None
 
-    def get_wordnet_pos_from_document(self, answer):
-        span = self.find_answer_span(answer)
-
+    def get_wordnet_pos_from_span(self, span):
         if span is None:
             return None
 
@@ -77,13 +83,18 @@ class IncorrectAnswerGenerator:
 
     def get_wordnet_candidates(self, answer):
 
+        # Return cached result immediately — WordNet traversal is expensive
+        cache_key = answer.strip().lower()
+        if cache_key in self._wordnet_cache:
+            return self._wordnet_cache[cache_key]
+
         wordnet_candidates = set()
 
-        # Find answer in its original context
+        # Find answer in its original context (once, reused below)
         span = self.find_answer_span(answer)
 
         # Determine POS from context
-        pos_type = self.get_wordnet_pos_from_document(answer)
+        pos_type = self.get_wordnet_pos_from_span(span)
 
         answer_key = answer.lower().replace(" ", "_")
 
@@ -106,9 +117,11 @@ class IncorrectAnswerGenerator:
             else:
                 synsets = wn.synsets(root_lemma)
 
-        for syn in synsets:
+        # Cap synset traversal to avoid exploding on answers with large graphs.
+        # Top 3 synsets × top 5 hypernyms is more than enough for 3 distractors.
+        for syn in synsets[:3]:
 
-            for hypernym in syn.hypernyms():
+            for hypernym in syn.hypernyms()[:5]:
 
                 for hypo in hypernym.hyponyms():
 
@@ -123,7 +136,9 @@ class IncorrectAnswerGenerator:
                         if name.lower() != answer.lower():
                             wordnet_candidates.add(name)
 
-        return list(wordnet_candidates)
+        result = list(wordnet_candidates)
+        self._wordnet_cache[cache_key] = result
+        return result
 
     def filter_candidates(self, candidates, answer):
         filtered = []
@@ -153,31 +168,45 @@ class IncorrectAnswerGenerator:
 
         return filtered
 
+    def get_cached_embeddings(self, texts):
+        uncached = [t for t in texts if t not in self._embedding_cache]
+
+        if uncached:
+            new_embeddings = self.ranker_model.encode(uncached, convert_to_tensor=True)
+            for text, embedding in zip(uncached, new_embeddings):
+                self._embedding_cache[text] = embedding
+
+        return torch.stack([self._embedding_cache[t] for t in texts])
+
     def rank_candidates(self, candidates, answer):
         if not candidates:
-            return []
-        answer_embedding = self.ranker_model.encode(answer, convert_to_tensor=True)
-        cand_embeddings = self.ranker_model.encode(candidates, convert_to_tensor=True)
+            return [], None
+        # Route the answer through the same cache used for candidates so the
+        # transformer is not called again for an answer already encoded in a
+        # previous question's distractor pass.
+        answer_embedding = self.get_cached_embeddings([answer])[0]
+        cand_embeddings = self.get_cached_embeddings(candidates)
 
         cosine_scores = util.cos_sim(cand_embeddings, answer_embedding)
 
-        scored_candidates = []
-        for i, score in enumerate(cosine_scores):
-            scored_candidates.append((score.item(), candidates[i]))
+        order = sorted(
+            range(len(candidates)),
+            key=lambda i: cosine_scores[i].item(),
+            reverse=True
+        )
 
-        scored_candidates.sort(key=lambda x: x[0], reverse=True)
-        return [cand[1] for cand in scored_candidates]
+        ranked_candidates = [candidates[i] for i in order]
+        ranked_embeddings = cand_embeddings[order]
 
-    def diversify_candidates(self, ranked_candidates, num_options):
+        return ranked_candidates, ranked_embeddings
+
+    def diversify_candidates(self, ranked_candidates, embeddings, num_options):
 
         selected = []
         selected_indices = []
 
-        embeddings = self.ranker_model.encode(
-            ranked_candidates,
-            convert_to_tensor=True,
-            show_progress_bar=False
-        )
+        if embeddings is None:
+            return selected
 
         for i, cand in enumerate(ranked_candidates):
 
@@ -211,8 +240,8 @@ class IncorrectAnswerGenerator:
         all_cands = list(set(doc_cands + wn_cands))
 
         cleaned = self.filter_candidates(all_cands, answer)
-        ranked = self.rank_candidates(cleaned, answer)
-        diversified = self.diversify_candidates(ranked, num_options)
+        ranked, ranked_embeddings = self.rank_candidates(cleaned, answer)
+        diversified = self.diversify_candidates(ranked, ranked_embeddings, num_options)
 
         if len(diversified) < num_options - 1:
             for cand in ranked:

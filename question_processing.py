@@ -1,12 +1,8 @@
 import re
 
-from sentence_transformers import SentenceTransformer, util
+from sentence_transformers import util
 
-
-# Load once when the application starts
-semantic_model = SentenceTransformer(
-    "./models/all-MiniLM-L6-v2"
-)
+from nlp_models import semantic_model
 
 
 def fix_residual_phrases(

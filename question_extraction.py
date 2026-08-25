@@ -1,11 +1,12 @@
 '''the module for generating
 '''
 import nltk
-import spacy
 import re
 from nltk.corpus import stopwords
 from nltk.tokenize import sent_tokenize, word_tokenize
 from sklearn.feature_extraction.text import TfidfVectorizer
+
+from nlp_models import nlp
 
 
 class QuestionExtractor:
@@ -22,7 +23,7 @@ class QuestionExtractor:
         self.stop_words = set(stopwords.words('english'))
 
         # named entity recognition tagger
-        self.ner_tagger = spacy.load('en_core_web_md')
+        self.ner_tagger = nlp
 
         self.vectorizer = TfidfVectorizer()
 
@@ -41,6 +42,9 @@ class QuestionExtractor:
         Returns:
             * dict
         '''
+        # parse the document once and reuse it for entity/noun-chunk extraction
+        self.doc = self.ner_tagger(document)
+
         # find candidate keywords
         self.candidate_keywords = self.get_candidate_entities(document)
 
@@ -80,10 +84,9 @@ class QuestionExtractor:
     def get_candidate_entities(self, document):
         ''' Returns a list of filtered entities (shorter and meaningful keywords)
         '''
-        entities = self.ner_tagger(document)
         entity_list = []
 
-        for ent in entities.ents:
+        for ent in self.doc.ents:
             text = ent.text.strip()
             # شروط التنقية: أن تكون الكلمة المفتاحية قصيرة (أقل من 30 حرفاً) ولا تحتوي على مسافات كثيرة
             if len(text.split()) <= 4 and len(text) < 30:
@@ -91,8 +94,7 @@ class QuestionExtractor:
 
         # إذا لم تجد الكيانات ما يكفي، يمكننا أخذ الأسماء (Nouns) أو العبارات القصيرة
         if len(entity_list) < self.num_questions:
-            doc = self.ner_tagger(document)
-            for chunk in doc.noun_chunks:
+            for chunk in self.doc.noun_chunks:
                 text = chunk.text.strip()
                 if len(text.split()) <= 3 and len(text) < 25 and text not in entity_list:
                     entity_list.append(text)
@@ -111,26 +113,31 @@ class QuestionExtractor:
 
         tf_idf_vector = self.vectorizer.fit_transform(self.filtered_sentences)
         feature_names = self.vectorizer.get_feature_names_out()
-        tf_idf_matrix = tf_idf_vector.todense().tolist()
 
         num_sentences = len(self.unfiltered_sentences)
-        num_features = len(feature_names)
+        if num_sentences == 0:
+            return
 
-        for i in range(num_features):
-            word = feature_names[i]
-            self.sentence_for_max_word_score[word] = ""
-            tot = 0.0
-            cur_max = 0.0
+        # Keep the matrix sparse (CSC layout gives fast column slicing).
+        # All aggregates are computed with numpy/scipy array ops — no Python
+        # loops over individual cells.
+        tf_idf_csc = tf_idf_vector.tocsc()
 
-            for j in range(num_sentences):
-                tot += tf_idf_matrix[j][i]
+        # Per-feature column sum → average score
+        col_sums = tf_idf_csc.sum(axis=0).A1          # shape (num_features,)
+        avg_scores = col_sums / num_sentences
 
-                if tf_idf_matrix[j][i] > cur_max:
-                    cur_max = tf_idf_matrix[j][i]
-                    self.sentence_for_max_word_score[word] = self.unfiltered_sentences[j]
+        # Per-feature argmax row index (sentence with highest score for that word)
+        tf_idf_csr = tf_idf_csc.tocsr()
+        col_argmax = tf_idf_csr.T.argmax(axis=1).A1   # shape (num_features,)
 
-            # average score for each word
-            self.word_score[word] = tot / num_sentences
+        for i, word in enumerate(feature_names):
+            self.word_score[word] = float(avg_scores[i])
+            self.sentence_for_max_word_score[word] = (
+                self.unfiltered_sentences[col_argmax[i]]
+                if avg_scores[i] > 0.0
+                else ""
+            )
 
     def get_keyword_score(self, keyword):
         ''' Returns the score for a keyword

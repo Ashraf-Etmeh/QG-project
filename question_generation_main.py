@@ -43,7 +43,8 @@ class QuestionGeneration:
         document = self.clean_text(document)
         self.questions_dict = self.question_extractor.get_questions_dict(
             document)
-        self.incorrect_answer_generator = IncorrectAnswerGenerator(document)
+        self.incorrect_answer_generator = IncorrectAnswerGenerator(
+            document, doc=self.question_extractor.doc)
 
         for i in range(1, self.num_questions + 1):
             if i not in self.questions_dict:
@@ -100,7 +101,7 @@ class QuestionGeneration_free:
         )
 
         self.incorrect_answer_generator = (
-            IncorrectAnswerGenerator(document)
+            IncorrectAnswerGenerator(document, doc=self.question_extractor.doc)
         )
 
         # Generate options ONLY for MCQs
